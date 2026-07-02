@@ -1,0 +1,79 @@
+GET http://localhost:5001/register/users
+
+###
+GET http://localhost:5001/register/register-max
+
+###
+GET http://localhost:5001/register/propinsi
+
+###
+GET http://localhost:5001/register/kota
+###
+
+###
+GET http://localhost:5001/register/kota/33
+
+###
+GET http://localhost:5001/register/upt?page=0&limit=10
+
+###
+GET http://localhost:5001/register/allupt
+
+###
+GET http://localhost:5001/register/traders
+
+###
+POST http://localhost:5001/register/register
+Content-Type: application/json
+
+{
+    "JENIS_USAHA": "3",
+    "NOMOR_KUSUKA": "123457",
+    "NAMA": "PT. PERUSAHAAN MAJU MANDIRI",
+    "NPWP": "123456789012345",
+    "NO_IZIN": "3333333",
+    "ALAMAT": "JL. KELIMUTU NO 53",
+    "PROPINSI": "1600",
+    "KOTA": "1607",
+    "KODEPOS": "40000",
+    "TELEPON": "021",
+    "EMAIL": "EMAIL",
+    "EMAIL_PNBP": "EMAIL PNBP",
+    "KETERANGAN": "KETERANGAN",
+    "TGL_DAFTAR": "2022/10/18",
+    "FILE_ID": "ASAL",
+    "STATUS": "1",
+    "LAST_UPDATED": "2022/10/18"
+}
+
+###
+POST http://localhost:5001/register/user
+Content-Type: application/json
+
+{
+    "ROLE": "8",
+    "KODE_TRADER": 17503,
+    "USERNAME": "MILAH",
+    "PASSWORD": "cc",
+    "JNS_ID": "1",
+    "NO_ID": "12",
+    "NAMA": "MARKUS",
+    "ALAMAT": "CALIFORNIA",
+    "EMAIL": "kadrun@gmail.com",
+    "TELEPON": "022555213",
+    "JABATAN": "Kuasa Pengguna Angin",
+    "KD_UNIT": "12",
+    "STATUS": "0",
+    "STS_LOGIN": "0",
+    "DATE_LOGIN": "2024/12/12",
+    "IP_LOGIN": "",
+    "LAST_LOGIN": "2024/12/12",
+    "DATE_CREATED": "2024/12/12",
+    "USER_CREATED": 1,
+    "LAST_UPDATED": "2024/12/12",
+    "USER_UPDATED": 1
+}
+
+###
+# GET http://localhost:5001/register/npwp/01.309.570.8-015.000
+GET http://localhost:5001/register/01.309.570.8-015.000
