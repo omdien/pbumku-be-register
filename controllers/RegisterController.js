@@ -9,6 +9,7 @@ import Tb_trader_dok from "../models/tb_trader_dok.js";
 import { Op, Sequelize } from "sequelize";
 import sequelize from "../config/database.js"; // ← pastikan export instance sequelize-nya
 import { format } from "date-fns";
+import { sendRegistrationConfirmationEmail } from "../services/emailService.js";
 
 // ─────────────────────────────────────────────
 // HELPER: Generate unique FILE_ID
@@ -89,7 +90,7 @@ export const registerFull = async (req, res) => {
         const kodeTrader = savedTrader.KODE_TRADER;
 
         // 2. Simpan user
-        await Tb_user.create(
+        const savedUser = await Tb_user.create(
             { ...user, KODE_TRADER: kodeTrader, DATE_CREATED: now, LAST_UPDATED: now },
             { transaction: t }
         );
@@ -130,9 +131,25 @@ export const registerFull = async (req, res) => {
 
         await t.commit();
 
+        // ── Kirim email konfirmasi SETELAH transaksi commit sukses ──────────────
+        // Dibungkus try-catch terpisah: kegagalan kirim email TIDAK boleh
+        // menggagalkan response registrasi yang sudah tersimpan di database.
+        let emailSent = true;
+        try {
+            await sendRegistrationConfirmationEmail({
+                toEmail: savedUser.EMAIL,
+                namaUser: savedUser.NAMA,
+                kdUnit: kodeUPT,
+            });
+        } catch (emailError) {
+            emailSent = false;
+            console.error("[registerFull] Gagal mengirim email konfirmasi:", emailError.message);
+        }
+
         res.status(201).json({
             msg: "Registrasi berhasil",
             kodeTrader,
+            emailSent,
         });
     } catch (error) {
         await t.rollback();
