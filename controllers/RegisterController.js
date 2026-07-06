@@ -10,6 +10,7 @@ import { Op, Sequelize } from "sequelize";
 import sequelize from "../config/database.js"; // ← pastikan export instance sequelize-nya
 import { format } from "date-fns";
 import { sendRegistrationConfirmationEmail } from "../services/emailService.js";
+import { getTradersService } from "../services/traderService.js";
 
 // ─────────────────────────────────────────────
 // HELPER: Generate unique FILE_ID
@@ -448,6 +449,33 @@ export const getLayananByTrader = async (req, res) => {
     } catch (error) {
         console.error("[getLayananByTrader]", error.message);
         res.status(500).json({ msg: "Gagal mengambil layanan trader" });
+    }
+};
+
+// export const getNewTraders = async (req, res) => {
+//     try {
+//         const { kd_upt } = req.query;
+//         const data = await getNewTradersService(kd_upt);
+//         res.status(200).json(data);
+//     } catch (error) {
+//         // UBAH INI: Agar error yang asli terlihat di terminal
+//         console.error("--- DETAIL ERROR ---");
+//         console.error(error); 
+        
+//         res.status(500).json({ msg: "Gagal", detail: error.message });
+//     }
+// };
+
+export const getNewTraders = async (req, res) => {
+    try {
+        const { kd_unit } = req.query; // Ambil optional parameter
+
+        const data = await getTradersService(kd_unit);
+
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("[Controller getTraders]", error.message);
+        res.status(500).json({ msg: "Gagal mengambil data trader" });
     }
 };
 

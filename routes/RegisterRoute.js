@@ -24,6 +24,7 @@ import {
     upTraderUpt,
     getLayananAll,
     getLayananByTrader,
+    getNewTraders,
 } from "../controllers/RegisterController.js";
 
 const router = express.Router();
@@ -48,6 +49,7 @@ router.get("/register/dokumen/:fileid/:kddokumen", getDokumen);
 router.get("/register/gettraderupt/:kdtrader",    getTraderUPT);
 router.get("/register/getlayanan/:kdtrader",      getLayananByTrader);
 router.get("/register/layanan",              getLayananAll);
+router.get("/register/newtraders",            getNewTraders);
 
 // ── Update (PATCH) ──────────────────────────────
 router.patch("/register/register/:kdtrader",         updateTrader);
