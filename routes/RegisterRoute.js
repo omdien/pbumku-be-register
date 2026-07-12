@@ -25,6 +25,9 @@ import {
     getLayananAll,
     getLayananByTrader,
     getNewTraders,
+    verifyApproveTrader,
+    verifyRejectTrader,
+    updateDokumen
 } from "../controllers/RegisterController.js";
 
 const router = express.Router();
@@ -56,5 +59,15 @@ router.patch("/register/register/:kdtrader",         updateTrader);
 router.patch("/register/user/:userid",               updateUser);
 router.patch("/register/crlayanan/:kode",            updateLayanan);
 router.patch("/register/uptraderupt/:kdtrader/:kdunit", upTraderUpt);
+
+// ── Verifikasi (POST) ─────────────────────────────
+router.post("/register/verify-approve/:kdtrader", verifyApproveTrader);
+router.post("/register/verify-reject/:kdtrader",  verifyRejectTrader);
+
+// ──────────────────────────────────────────────
+// PATCH: Ganti dokumen lama dengan yang baru (replace, bukan insert)
+// Body: { DOK_PATH }
+// ──────────────────────────────────────────────
+router.patch("/register/dokumen/:fileid/:kddokumen", updateDokumen);
 
 export default router;

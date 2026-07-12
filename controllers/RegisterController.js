@@ -9,7 +9,11 @@ import Tb_trader_dok from "../models/tb_trader_dok.js";
 import { Op, Sequelize } from "sequelize";
 import sequelize from "../config/database.js"; // ← pastikan export instance sequelize-nya
 import { format } from "date-fns";
-import { sendRegistrationConfirmationEmail } from "../services/emailService.js";
+import { 
+    sendRegistrationConfirmationEmail,
+    sendVerificationApprovedEmail,
+    sendVerificationRejectedEmail
+} from "../services/emailService.js";
 import { getTradersService } from "../services/traderService.js";
 
 // ─────────────────────────────────────────────
@@ -476,6 +480,130 @@ export const getNewTraders = async (req, res) => {
     } catch (error) {
         console.error("[Controller getTraders]", error.message);
         res.status(500).json({ msg: "Gagal mengambil data trader" });
+    }
+};
+
+// ─────────────────────────────────────────────
+// POST: Verifikasi disetujui — set STATUS aktif + buka akses login + kirim email approve
+// ─────────────────────────────────────────────
+export const verifyApproveTrader = async (req, res) => {
+    try {
+        const kdtrader = req.params.kdtrader;
+        const now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+
+        const trader = await Tb_r_trader.findOne({ where: { KODE_TRADER: kdtrader } });
+        if (!trader) return res.status(404).json({ msg: "Trader tidak ditemukan" });
+
+        const user = await Tb_user.findOne({ where: { KODE_TRADER: kdtrader, ROLE: 4 } });
+        if (!user) return res.status(404).json({ msg: "User tidak ditemukan" });
+
+        const traderUpt = await Tb_trader_upt.findOne({ where: { KODE_TRADER: kdtrader } });
+
+        // 1. Set status verifikasi trader jadi aktif
+        await Tb_r_trader.update(
+            { STATUS: "2", LAST_UPDATED: now },
+            { where: { KODE_TRADER: kdtrader } }
+        );
+
+        // 2. Buka akses login user (STATUS "1" -> "0")
+        await Tb_user.update(
+            { STATUS: "0", LAST_UPDATED: now },
+            { where: { KODE_TRADER: kdtrader, ROLE: 4 } }
+        );
+
+        let emailSent = true;
+        try {
+            await sendVerificationApprovedEmail({
+                toEmail: user.EMAIL,
+                namaUser: user.NAMA,
+                kdUnit: traderUpt?.KD_UNIT,
+            });
+        } catch (emailError) {
+            emailSent = false;
+            console.error("[verifyApproveTrader] Gagal mengirim email:", emailError.message);
+        }
+
+        res.status(200).json({ msg: "Trader berhasil disetujui, akses login dibuka", emailSent });
+    } catch (error) {
+        console.error("[verifyApproveTrader]", error.message);
+        res.status(500).json({ msg: "Gagal menyetujui trader" });
+    }
+};
+
+
+// ─────────────────────────────────────────────
+// POST: Verifikasi ditolak/ditunda — set STATUS ditolak + kirim email + alasan
+// Body: { alasan }
+// ─────────────────────────────────────────────
+export const verifyRejectTrader = async (req, res) => {
+    try {
+        const kdtrader = req.params.kdtrader;
+        const { alasan } = req.body;
+
+        if (!alasan || !alasan.trim()) {
+            return res.status(400).json({ msg: "Alasan penolakan wajib diisi" });
+        }
+
+        const trader = await Tb_r_trader.findOne({ where: { KODE_TRADER: kdtrader } });
+        if (!trader) return res.status(404).json({ msg: "Trader tidak ditemukan" });
+
+        const user = await Tb_user.findOne({ where: { KODE_TRADER: kdtrader, ROLE: 4 } });
+        if (!user) return res.status(404).json({ msg: "User tidak ditemukan" });
+
+        const now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+        await Tb_r_trader.update(
+            { STATUS: "9", LAST_UPDATED: now },
+            { where: { KODE_TRADER: kdtrader } }
+        );
+
+        let emailSent = true;
+        try {
+            await sendVerificationRejectedEmail({
+                toEmail: user.EMAIL,
+                namaUser: user.NAMA,
+                alasan: alasan.trim(),
+            });
+        } catch (emailError) {
+            emailSent = false;
+            console.error("[verifyRejectTrader] Gagal mengirim email:", emailError.message);
+        }
+
+        res.status(200).json({ msg: "Trader berhasil ditolak/ditunda", emailSent });
+    } catch (error) {
+        console.error("[verifyRejectTrader]", error.message);
+        res.status(500).json({ msg: "Gagal menolak trader" });
+    }
+};
+
+// ─────────────────────────────────────────────
+// PATCH: Ganti dokumen lama dengan yang baru (replace, bukan insert)
+// Body: { DOK_PATH }
+// ─────────────────────────────────────────────
+export const updateDokumen = async (req, res) => {
+    try {
+        const { fileid, kddokumen } = req.params;
+        const { DOK_PATH } = req.body;
+
+        if (!DOK_PATH) {
+            return res.status(400).json({ msg: "DOK_PATH wajib diisi" });
+        }
+
+        const existing = await Tb_trader_dok.findOne({
+            where: { FILE_ID: fileid, DOK_KODE: kddokumen },
+        });
+        if (!existing) {
+            return res.status(404).json({ msg: "Dokumen tidak ditemukan untuk diganti" });
+        }
+
+        await Tb_trader_dok.update(
+            { DOK_PATH },
+            { where: { FILE_ID: fileid, DOK_KODE: kddokumen } }
+        );
+
+        res.status(200).json({ msg: "Dokumen berhasil diganti" });
+    } catch (error) {
+        console.error("[updateDokumen]", error.message);
+        res.status(500).json({ msg: "Gagal mengganti dokumen" });
     }
 };
 

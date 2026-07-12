@@ -1,24 +1,55 @@
 import Tb_r_trader from "../models/Tb_r_trader.js";
 import Tb_user from "../models/tb_user.js";
+import Tb_trader_upt from "../models/tb_trader_upt.js";
+
+// export const findAllTraders = async (kd_upt) => {
+//     // Definisikan kondisi filter
+//     const userFilter = { ROLE: 4 };
+
+//     // Jika kd_upt ada, tambahkan ke filter
+//     if (kd_upt) {
+//         userFilter.KD_UNIT = kd_upt;
+//     }
+
+//     // Eksekusi query
+//     return await Tb_r_trader.findAll({
+//         attributes: ["KODE_TRADER", "NAMA", "NPWP", "EMAIL", "TELEPON"],
+//         include: {
+//             model: Tb_user,
+//             attributes: ["KD_UNIT"],
+//             where: userFilter,
+//         },
+//         distinct: true,
+//     });
+// };
 
 export const findAllTraders = async (kd_upt) => {
-    // Definisikan kondisi filter
-    const userFilter = { ROLE: 4 };
+    // Filter user tetap berdasarkan ROLE saja (bukan lagi KD_UNIT)
+    const userWhere = { ROLE: '4' };
 
-    // Jika kd_upt ada, tambahkan ke filter
+    // Filter UPT sekarang berdasarkan tabel relasi tb_trader_upt
+    const traderUptWhere = {};
     if (kd_upt) {
-        userFilter.KD_UNIT = kd_upt;
+        traderUptWhere.KD_UNIT = kd_upt;
     }
 
-    // Eksekusi query
     return await Tb_r_trader.findAll({
-        attributes: ["KODE_TRADER", "NAMA", "NPWP", "EMAIL", "TELEPON"],
-        include: {
-            model: Tb_user,
-            attributes: ["KD_UNIT"],
-            where: userFilter,
-        },
-        distinct: true,
+        attributes: ["KODE_TRADER", "NAMA", "NPWP", "EMAIL", "TELEPON", "STATUS"],
+        include: [
+            {
+                model: Tb_user,
+                attributes: ["NAMA"],
+                where: userWhere,
+            },
+            {
+                model: Tb_trader_upt,
+                attributes: ["KD_UNIT", "STATUS"],
+                // hanya di-filter (inner join) kalau kd_upt dikirim;
+                // kalau tidak, tetap left-join biar trader tanpa relasi UPT tidak hilang dari list
+                where: kd_upt ? traderUptWhere : undefined,
+                required: !!kd_upt,
+            },
+        ],
     });
 };
 
